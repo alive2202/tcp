@@ -3,18 +3,15 @@
 #include "QDir"
 tcp_server::tcp_server()
 {
- QDir d;
- QFile file;
- QString FileName = "D:\\football.json";
- file.setFileName(FileName);
- if(file.open(QIODevice::ReadOnly|QFile::Text))
-   {
-     FileData = file.readAll();
-   }
- else
-     qDebug("Cant open file %s", FileName.toLocal8Bit().data());
+ db = QSqlDatabase::addDatabase("QSQLITE");
+ db.setDatabaseName("C:\\sqlite\\football.db");
 
- file.close();
+ if(db.open())
+ {
+  qDebug("DATA BASE was opened");
+ }
+ else qDebug("DATA BASE was NOT opened");
+
 }
 
 void tcp_server::startServer()
@@ -50,11 +47,7 @@ void tcp_server::readSocket()
         Data = socket->readAll();
 
  if(Data!=0) {
-     qDebug() << "Server got Data = " << Data << "\n";
-     //socket->write("Server received some data");
-     //QString str("{\"type\":\"connect\",\"status\":\"yes\"}");
-     //socket->write("{\"type\":\"connect\",\"status\":\"yes\"}");
-     //cstr.toLatin1());
+     //qDebug() << "Server got Data = " << Data << "\n";
 
      doc = QJsonDocument::fromJson(Data,&err);
      if(err.errorString()=="no error occurred")
@@ -62,18 +55,66 @@ void tcp_server::readSocket()
       if( (doc.object().value("type").toString()=="select") &&
           (doc.object().value("data").toString()=="players")   )
         {
-         QByteArray send = "{\"type\":\"resultSelect\",\"result\":"+FileData+"}";
-         socket->write(send);
-         socket->waitForBytesWritten(500);
+         //QByteArray send = "{\"type\":\"resultSelect\",\"result\":"+FileData+"}";
+
+         if(db.isOpen())
+         {
+             QByteArray send = "{\"type\":\"resultSelect\",\"result\":[";
+             QSqlQuery *query = new QSqlQuery(db);
+             if(query->exec("SELECT Player FROM T_Players"))
+             {
+                while(query->next())
+                {
+                 send.append("{\"name\":\""+query->value(0).toString()+"\"},");
+                }
+
+                send.remove(send.length()-1,1);
+                send.append("]}");
+
+                qDebug() << send << "\n";
+
+                socket->write(send);
+                socket->waitForBytesWritten(500);
+             }
+             else qDebug() << "Cant read palyers from DB \n";
+
+
+         }
         }
       else if( (doc.object().value("type").toString()=="select") &&
           (doc.object().value("data").toString()=="fc name")   )
         {
-         QByteArray send = "{\"type\":\"resultSelect\",\"result\":"+FileData+"}";
-         socket->write(send);
-         socket->waitForBytesWritten(500);
-        }
+          if(db.isOpen())
+          {
+              QByteArray send = "{\"type\":\"resultSelect2\",\"result\":[";
+              QSqlQuery *query = new QSqlQuery(db);
+              if(query->exec("SELECT FC_name FROM T_Players"))
+              {
+                 QSet <QString> fc_set;
 
+                 while(query->next())
+                 {
+                  if(!fc_set.contains(query->value(0).toString()))
+                  {
+                   send.append("{\"FC name\":\""+query->value(0).toString()+"\"},");
+                   fc_set.insert(query->value(0).toString());
+                  }
+                 }
+
+                 fc_set.clear();
+
+                 send.remove(send.length()-1,1);
+                 send.append("]}");
+
+                 qDebug() << send << "\n";
+
+                 socket->write(send);
+                 socket->waitForBytesWritten(500);
+              }
+              else qDebug() << "Cant read fc names from DB \n";
+
+        }
+        }
 
 
      }

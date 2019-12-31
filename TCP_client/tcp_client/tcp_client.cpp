@@ -29,7 +29,7 @@ void tcp_client::readSocket()
   if(Data!=0) {
      //qDebug("Client got Data ");
      //socket->write("Client received some data");
-      //qDebug() << Data << "\n";
+      qDebug() << Data << "\n";
 
       doc = QJsonDocument::fromJson(Data, &err);
 
@@ -44,15 +44,33 @@ void tcp_client::readSocket()
           else if( (doc.object().value("type").toString()=="resultSelect"))
                    //&& (doc.object().value("result").toString()=="yes") )
           {
-           QStandardItemModel *model = new QStandardItemModel();
+           QStandardItemModel *model = new QStandardItemModel();                     
            model->setHorizontalHeaderLabels(QStringList()<<"names");
            QJsonArray arr = doc.object().value("result").toArray();
 
-           qDebug("loop   =%d", arr.count());
+           qDebug("loop player names  =%d", arr.count());
 
            for(int i=0; i<arr.count();i++)
            {
-            QStandardItem *col = new QStandardItem(arr[i].toObject().value("fc name").toString());
+            QStandardItem *col = new QStandardItem(arr[i].toObject().value("name").toString());
+            model->appendRow(col);
+
+           }
+
+           ui->tableView->setModel(model);
+          }
+          else if( (doc.object().value("type").toString()=="resultSelect2"))
+                   //&& (doc.object().value("result").toString()=="yes") )
+          {
+           QStandardItemModel *model = new QStandardItemModel();
+           model->setHorizontalHeaderLabels(QStringList()<<"FC names");
+           QJsonArray arr = doc.object().value("result").toArray();
+
+           qDebug("loop FC names  =%d", arr.count());
+
+           for(int i=0; i<arr.count();i++)
+           {
+            QStandardItem *col = new QStandardItem(arr[i].toObject().value("FC name").toString());
             model->appendRow(col);
 
            }
@@ -105,7 +123,7 @@ void tcp_client::on_pushButton_4_clicked()
 {
     if(socket->isOpen())
     {
-     QString str("{\"type\":\"Milan\",\"data\":\"players\"}");
+     QString str("{\"type\":\"select\",\"data\":\"players\"}");
      socket->write(str.toLatin1());
     }
 }

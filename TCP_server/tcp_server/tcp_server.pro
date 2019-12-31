@@ -10,6 +10,8 @@ QT       -= gui
 
 CONFIG += C++11
 
+QT += sql
+
 
 TARGET = tcp_server
 CONFIG   += console

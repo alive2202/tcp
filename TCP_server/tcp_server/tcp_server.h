@@ -9,6 +9,10 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
+#include <QSqlDatabase>
+#include <QSqlQuery>
+
+#include <QSet>
 
 
 
@@ -26,6 +30,8 @@ public:
 
     QJsonDocument doc;
     QJsonParseError err;
+
+    QSqlDatabase db;
 
 public slots:
     void startServer();

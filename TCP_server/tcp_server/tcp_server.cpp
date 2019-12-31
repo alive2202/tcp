@@ -4,13 +4,21 @@
 tcp_server::tcp_server()
 {
  db = QSqlDatabase::addDatabase("QSQLITE");
- db.setDatabaseName("C:\\sqlite\\football.db");
+
+
+ //db.setDatabaseName("C:\\sqlite\\football.db");
+ //db.setDatabaseName("D:\\Users\\Alive\\progs\\Git\\tcp\\TCP_server\\tcp_server\\football.db");
+
+ QDir dir;
+ QString path = dir.currentPath()+"\\football.db";
+
+ db.setDatabaseName(path);
 
  if(db.open())
  {
-  qDebug("DATA BASE was opened");
+  qDebug("DATA BASE was opened!!!");
  }
- else qDebug("DATA BASE was NOT opened");
+ else qDebug("DATA BASE was NOT opened %s", path.toLocal8Bit().data());
 
 }
 

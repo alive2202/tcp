@@ -27,8 +27,43 @@ void tcp_client::readSocket()
 
 
   if(Data!=0) {
-     qDebug("Client got Data ");
+     //qDebug("Client got Data ");
      //socket->write("Client received some data");
+      //qDebug() << Data << "\n";
+
+      doc = QJsonDocument::fromJson(Data, &err);
+
+      //if(err.errorString().toInt()==QJsonParseError::NoError)
+      if(err.errorString()=="no error occurred")
+      {
+          if( (doc.object().value("type").toString()=="connect")  &&
+              (doc.object().value("status").toString()=="yes") )
+          {
+           QMessageBox::information(this,"JSON","get good json data");
+          }
+          else if( (doc.object().value("type").toString()=="resultSelect"))
+                   //&& (doc.object().value("result").toString()=="yes") )
+          {
+           QStandardItemModel *model = new QStandardItemModel();
+           model->setHorizontalHeaderLabels(QStringList()<<"names");
+           QJsonArray arr = doc.object().value("result").toArray();
+
+           qDebug("loop   =%d", arr.count());
+
+           for(int i=0; i<arr.count();i++)
+           {
+            QStandardItem *col = new QStandardItem(arr[i].toObject().value("fc name").toString());
+            model->appendRow(col);
+
+           }
+
+           ui->tableView->setModel(model);
+          }
+          else QMessageBox::information(this,"JSON","get bad json data");
+      }
+      else
+          QMessageBox::information(this,"JSON","errors with format json "+err.errorString());
+
   }
   else  qDebug("Data is null");
  }
@@ -55,4 +90,22 @@ void tcp_client::on_pushButton_2_clicked()
 {
  static int count=0;
  socket->write(QByteArray::number(count++, 10));
+}
+
+void tcp_client::on_pushButton_3_clicked()
+{
+    if(socket->isOpen())
+    {
+     QString str("{\"type\":\"select\",\"data\":\"fc name\"}");
+     socket->write(str.toLatin1());
+    }
+}
+
+void tcp_client::on_pushButton_4_clicked()
+{
+    if(socket->isOpen())
+    {
+     QString str("{\"type\":\"Milan\",\"data\":\"players\"}");
+     socket->write(str.toLatin1());
+    }
 }

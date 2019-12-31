@@ -1,8 +1,20 @@
 #include "tcp_server.h"
-
+#include "QFile"
+#include "QDir"
 tcp_server::tcp_server()
 {
+ QDir d;
+ QFile file;
+ QString FileName = "D:\\football.json";
+ file.setFileName(FileName);
+ if(file.open(QIODevice::ReadOnly|QFile::Text))
+   {
+     FileData = file.readAll();
+   }
+ else
+     qDebug("Cant open file %s", FileName.toLocal8Bit().data());
 
+ file.close();
 }
 
 void tcp_server::startServer()
@@ -39,7 +51,33 @@ void tcp_server::readSocket()
 
  if(Data!=0) {
      qDebug() << "Server got Data = " << Data << "\n";
-     socket->write("Server received some data");
+     //socket->write("Server received some data");
+     //QString str("{\"type\":\"connect\",\"status\":\"yes\"}");
+     //socket->write("{\"type\":\"connect\",\"status\":\"yes\"}");
+     //cstr.toLatin1());
+
+     doc = QJsonDocument::fromJson(Data,&err);
+     if(err.errorString()=="no error occurred")
+     {
+      if( (doc.object().value("type").toString()=="select") &&
+          (doc.object().value("data").toString()=="players")   )
+        {
+         QByteArray send = "{\"type\":\"resultSelect\",\"result\":"+FileData+"}";
+         socket->write(send);
+         socket->waitForBytesWritten(500);
+        }
+      else if( (doc.object().value("type").toString()=="select") &&
+          (doc.object().value("data").toString()=="fc name")   )
+        {
+         QByteArray send = "{\"type\":\"resultSelect\",\"result\":"+FileData+"}";
+         socket->write(send);
+         socket->waitForBytesWritten(500);
+        }
+
+
+
+     }
+
  }
  else  qDebug() << "Data is null \n";
 
